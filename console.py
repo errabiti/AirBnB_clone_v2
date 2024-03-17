@@ -113,42 +113,27 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, arg):
-        if len(arg) == 0:
+    def do_create(self, args):
+        """ Create an object of any class"""
+        try:
+            if not args:
+                raise SyntaxError()
+            arg_list = args.split(" ")
+            kw = {}
+            for arg in arg_list[1:]:
+                arg_splited = arg.split("=")
+                arg_splited[1] = eval(arg_splited[1])
+                if type(arg_splited[1]) is str:
+                    arg_splited[1] = arg_splited[1].replace("_",
+				                            " ").replace('"', '\\"')
+                kw[arg_splited[0]] = arg_splited[1]
+        except SyntaxError:
             print("** class name missing **")
-            return
-
-        args_list = arg.split()
-        class_name = args_list[0]
-        params_list = args_list[1:]
-
-        if class_name not in HBNBCommand.classes:
+        except NameError:
             print("** class doesn't exist **")
-            return
-
-        params = {}
-        for item in params_list:
-            if "=" in item:
-                key, value = item.split("=")
-                key = key.replace("_", " ")
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1]
-                if "." in value:
-                    try:
-                        value = float(value)
-                    except ValueError:
-                        pass
-                else:
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        pass
-                params[key] = value
-
-        new_instance = HBNBCommand.classes[class_name](**params)
-        storage.save()
+        new_instance = HBNBCommand.classes[arg_list[0]](**kw)
+        new_instance.save()
         print(new_instance.id)
-
 
     def help_create(self):
         """ Help information for the create method """
