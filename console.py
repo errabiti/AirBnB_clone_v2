@@ -133,33 +133,28 @@ class HBNBCommand(cmd.Cmd):
         # Parse parameters
         params = {}
         for item in params_list:
-            if "=" in item:
-                key, value = item.split("=")
-                # Replace underscores with spaces in keys
-                key = key.replace("_", " ")
-                # Remove double quotes from the beginning and end of values
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1]
-                # Convert values to float if they contain a dot
-                if "." in value:
-                    try:
-                        value = float(value)
-                    except ValueError:
-                        pass
-                else:
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        pass
-                # Add key-value pair to params dictionary
-                params[key] = value
+            key_value = item.split('=')
+            key = key_value[0]
+            value = '='.join(key_value[1:])
+            if value[0] == '"' and value[-1] == '"':
+                value = value[1:-1].replace('_', ' ')
+            elif '.' in value:
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass
+            params[key] = value
 
         # Create an instance with the given parameters
         new_instance = HBNBCommand.classes[class_name](**params)
-        # Save the new instance
         storage.save()
-        # Print the ID of the new instance
         print(new_instance.id)
+
 
     def help_create(self):
         """ Help information for the create method """
