@@ -16,3 +16,7 @@ class Place(BaseModel):
     latitude = 0.0
     longitude = 0.0
     amenity_ids = []
+
+    def __str__(self):
+        """ Return a string representation of the Place instance """
+        return "[{}] ({}) {}".format(type(self).__name__, self.id, self.__dict__)
