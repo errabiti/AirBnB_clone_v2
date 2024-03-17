@@ -73,7 +73,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}' \
+                    if pline[0] is '{' and pline[-1] is'}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -114,43 +114,37 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, arg):
-        """Create an object with given parameters"""
-        # Check if class name is provided
         if len(arg) == 0:
             print("** class name missing **")
             return
 
-        # Split the argument into class name and parameters
         args_list = arg.split()
         class_name = args_list[0]
         params_list = args_list[1:]
 
-        # Check if class exists
         if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
 
-        # Parse parameters
         params = {}
         for item in params_list:
-            key_value = item.split('=')
-            key = key_value[0]
-            value = '='.join(key_value[1:])
-            if value[0] == '"' and value[-1] == '"':
-                value = value[1:-1].replace('_', ' ')
-            elif '.' in value:
-                try:
-                    value = float(value)
-                except ValueError:
-                    pass
-            else:
-                try:
-                    value = int(value)
-                except ValueError:
-                    pass
-            params[key] = value
+            if "=" in item:
+                key, value = item.split("=")
+                key = key.replace("_", " ")
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                if "." in value:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass
+                else:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        pass
+                params[key] = value
 
-        # Create an instance with the given parameters
         new_instance = HBNBCommand.classes[class_name](**params)
         storage.save()
         print(new_instance.id)
@@ -349,7 +343,6 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
-
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
