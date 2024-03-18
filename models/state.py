@@ -26,5 +26,3 @@ class State(BaseModel, Base):
                 if city.state_id == self.id:
                     city_l.append(city)
             return city_l
-
-    #id = Column(String(60), nullable=False, primary_key=True)
