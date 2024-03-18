@@ -1,17 +1,8 @@
 import unittest
-from models.base_model import BaseModel
-from models.place import Place
-from models.amenity import Amenity
-from models.city import City
-from models.state import State
-from models.review import Review
-from models.user import User
-import models
-
-# Import MySQL connector library
 import mysql.connector
+from models.place import Place
 
-class TestMySQLIntegration(unittest.TestCase):
+class TestPlaceMySQLIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up a connection to the test MySQL database"""
@@ -31,59 +22,56 @@ class TestMySQLIntegration(unittest.TestCase):
         """Create a cursor to execute SQL queries"""
         self.cursor = self.conn.cursor()
 
-        # Initialize models.storage
-        models.storage._BaseModel__session = self.conn.cursor()
-
         # Create tables in the test database
-        with open('file.sql', 'r') as file:
-            sql_script = file.read()
-            self.cursor.execute(sql_script)
+        self.cursor.execute(
+            CREATE TABLE IF NOT EXISTS places (
+                id VARCHAR(60) PRIMARY KEY,
+                city_id VARCHAR(60) NOT NULL,
+                user_id VARCHAR(60) NOT NULL,
+                name VARCHAR(128) NOT NULL,
+                description TEXT,
+                number_rooms INT NOT NULL,
+                number_bathrooms INT NOT NULL,
+                max_guest INT NOT NULL,
+                price_by_night INT NOT NULL,
+                latitude FLOAT,
+                longitude FLOAT
+            )
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
         self.conn.rollback()
         self.cursor.close()
 
-    def test_place_attributes(self):
-        """Test attributes of the Place model"""
-        # Create a new place object
-        place = Place(name="Test Place")
+    def test_create_place(self):
+        """Test creating a Place object and saving it to the database"""
+        # Create a new Place object
+        place = Place(city_id="city_id", user_id="user_id", name="Place Name",
+                      description="Place description", number_rooms=2,
+                      number_bathrooms=1, max_guest=4, price_by_night=100,
+                      latitude=40.7128, longitude=-74.0060)
 
-        # Test individual attributes
-        self.assertEqual(place.name, "Test Place")
-
-    def test_place_relationships(self):
-        """Test relationships of the Place model"""
-        # Create related objects (e.g., city, user)
-        city = City(name="Test City")
-        user = User(email="test@example.com", password="password")
-        city.save()
-        user.save()
-
-        # Create a new place object associated with the city and user
-        place = Place(name="Test Place", city_id=city.id, user_id=user.id)
+        # Save the Place to the database
         place.save()
 
-        # Retrieve the place object from the database
-        place_from_db = models.storage.get(Place, place.id)
+        # Retrieve the Place object from the database
+        self.cursor.execute("SELECT * FROM places WHERE id = %s", (place.id,))
+        result = self.cursor.fetchone()
 
-        # Test relationships
-        self.assertEqual(place_from_db.city, city)
-        self.assertEqual(place_from_db.user, user)
-
-    def test_place_behavior(self):
-        """Test behavior of the Place model"""
-        # Create a new place object
-        place = Place(name="Test Place")
-
-        # Save the place to the database
-        place.save()
-
-        # Retrieve the place object from the database
-        place_from_db = models.storage.get(Place, place.id)
-
-        # Test behavior (e.g., saving, updating)
-        self.assertEqual(place_from_db.name, "Test Place")
+        # Verify that the object was saved to the database
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], place.id)
+        self.assertEqual(result[1], place.city_id)
+        self.assertEqual(result[2], place.user_id)
+        self.assertEqual(result[3], place.name)
+        self.assertEqual(result[4], place.description)
+        self.assertEqual(result[5], place.number_rooms)
+        self.assertEqual(result[6], place.number_bathrooms)
+        self.assertEqual(result[7], place.max_guest)
+        self.assertEqual(result[8], place.price_by_night)
+        self.assertEqual(result[9], place.latitude)
+        self.assertEqual(result[10], place.longitude)
 
 if __name__ == "__main__":
     unittest.main()

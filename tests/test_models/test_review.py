@@ -1,8 +1,6 @@
 import unittest
 import mysql.connector
 from models.review import Review
-from datetime import datetime
-
 
 class TestReviewMySQLIntegration(unittest.TestCase):
     @classmethod
@@ -25,14 +23,14 @@ class TestReviewMySQLIntegration(unittest.TestCase):
         self.cursor = self.conn.cursor()
 
         # Create tables in the test database
-        self.cursor.execute("""
+        self.cursor.execute(
             CREATE TABLE IF NOT EXISTS reviews (
                 id VARCHAR(60) PRIMARY KEY,
-                text VARCHAR(1024) NOT NULL,
+                text TEXT NOT NULL,
                 place_id VARCHAR(60) NOT NULL,
                 user_id VARCHAR(60) NOT NULL
             )
-        """)
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
@@ -42,14 +40,13 @@ class TestReviewMySQLIntegration(unittest.TestCase):
     def test_create_review(self):
         """Test creating a Review object and saving it to the database"""
         # Create a new Review object
-        review = Review(text="Great place to stay",
-                        place_id="123",
-                        user_id="456")
+        review = Review(text="This place is great!", place_id="place_id",
+                        user_id="user_id")
 
-        # Save the review to the database
+        # Save the Review to the database
         review.save()
 
-        # Retrieve the review object from the database
+        # Retrieve the Review object from the database
         self.cursor.execute("SELECT * FROM reviews WHERE id = %s", (review.id,))
         result = self.cursor.fetchone()
 
@@ -59,7 +56,6 @@ class TestReviewMySQLIntegration(unittest.TestCase):
         self.assertEqual(result[1], review.text)
         self.assertEqual(result[2], review.place_id)
         self.assertEqual(result[3], review.user_id)
-
 
 if __name__ == "__main__":
     unittest.main()

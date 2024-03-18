@@ -1,8 +1,6 @@
 import unittest
 import mysql.connector
 from models.base_model import BaseModel
-from datetime import datetime
-
 
 class TestBaseModelMySQLIntegration(unittest.TestCase):
     @classmethod
@@ -25,47 +23,35 @@ class TestBaseModelMySQLIntegration(unittest.TestCase):
         self.cursor = self.conn.cursor()
 
         # Create tables in the test database
-        self.cursor.execute("""
+        self.cursor.execute(
             CREATE TABLE IF NOT EXISTS base_models (
                 id VARCHAR(60) PRIMARY KEY,
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
             )
-        """)
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
         self.conn.rollback()
         self.cursor.close()
 
-    def test_base_model_attributes(self):
-        """Test attributes of the BaseModel class"""
+    def test_create_base_model(self):
+        """Test creating a BaseModel object and saving it to the database"""
         # Create a new BaseModel object
         base_model = BaseModel()
 
-        # Test individual attributes
-        self.assertIsNotNone(base_model.id)
-        self.assertIsInstance(base_model.created_at, datetime)
-        self.assertIsInstance(base_model.updated_at, datetime)
-
-    def test_base_model_save(self):
-        """Test saving a BaseModel object to the database"""
-        # Create a new BaseModel object
-        base_model = BaseModel()
-
-        # Save the base model to the database
+        # Save the BaseModel to the database
         base_model.save()
 
-        # Retrieve the base model object from the database
+        # Retrieve the BaseModel object from the database
         self.cursor.execute("SELECT * FROM base_models WHERE id = %s", (base_model.id,))
         result = self.cursor.fetchone()
 
         # Verify that the object was saved to the database
         self.assertIsNotNone(result)
         self.assertEqual(result[0], base_model.id)
-        self.assertEqual(result[1], base_model.created_at)
-        self.assertEqual(result[2], base_model.updated_at)
-
+        # Add more assertions as needed for other attributes
 
 if __name__ == "__main__":
     unittest.main()

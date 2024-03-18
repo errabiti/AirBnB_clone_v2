@@ -2,7 +2,6 @@ import unittest
 import mysql.connector
 from models.user import User
 
-
 class TestUserMySQLIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -24,7 +23,7 @@ class TestUserMySQLIntegration(unittest.TestCase):
         self.cursor = self.conn.cursor()
 
         # Create tables in the test database
-        self.cursor.execute("""
+        self.cursor.execute(
             CREATE TABLE IF NOT EXISTS users (
                 id VARCHAR(60) PRIMARY KEY,
                 email VARCHAR(128) NOT NULL,
@@ -32,7 +31,7 @@ class TestUserMySQLIntegration(unittest.TestCase):
                 first_name VARCHAR(128),
                 last_name VARCHAR(128)
             )
-        """)
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
@@ -42,12 +41,12 @@ class TestUserMySQLIntegration(unittest.TestCase):
     def test_create_user(self):
         """Test creating a User object and saving it to the database"""
         # Create a new User object
-        user = User(email="test@example.com", password="password123", first_name="John", last_name="Doe")
+        user = User(email="test@example.com", password="password", first_name="John", last_name="Doe")
 
-        # Save the user to the database
+        # Save the User to the database
         user.save()
 
-        # Retrieve the user object from the database
+        # Retrieve the User object from the database
         self.cursor.execute("SELECT * FROM users WHERE id = %s", (user.id,))
         result = self.cursor.fetchone()
 
@@ -58,7 +57,6 @@ class TestUserMySQLIntegration(unittest.TestCase):
         self.assertEqual(result[2], user.password)
         self.assertEqual(result[3], user.first_name)
         self.assertEqual(result[4], user.last_name)
-
 
 if __name__ == "__main__":
     unittest.main()

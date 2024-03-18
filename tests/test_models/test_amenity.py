@@ -1,8 +1,6 @@
 import unittest
 import mysql.connector
 from models.amenity import Amenity
-from datetime import datetime
-
 
 class TestAmenityMySQLIntegration(unittest.TestCase):
     @classmethod
@@ -25,12 +23,12 @@ class TestAmenityMySQLIntegration(unittest.TestCase):
         self.cursor = self.conn.cursor()
 
         # Create tables in the test database
-        self.cursor.execute("""
+        self.cursor.execute(
             CREATE TABLE IF NOT EXISTS amenities (
                 id VARCHAR(60) PRIMARY KEY,
                 name VARCHAR(128) NOT NULL
             )
-        """)
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
@@ -40,12 +38,12 @@ class TestAmenityMySQLIntegration(unittest.TestCase):
     def test_create_amenity(self):
         """Test creating an Amenity object and saving it to the database"""
         # Create a new Amenity object
-        amenity = Amenity(name="Swimming Pool")
+        amenity = Amenity(name="WiFi")
 
-        # Save the amenity to the database
+        # Save the Amenity to the database
         amenity.save()
 
-        # Retrieve the amenity object from the database
+        # Retrieve the Amenity object from the database
         self.cursor.execute("SELECT * FROM amenities WHERE id = %s", (amenity.id,))
         result = self.cursor.fetchone()
 
@@ -53,7 +51,6 @@ class TestAmenityMySQLIntegration(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result[0], amenity.id)
         self.assertEqual(result[1], amenity.name)
-
 
 if __name__ == "__main__":
     unittest.main()

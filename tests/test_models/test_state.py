@@ -2,7 +2,6 @@ import unittest
 import mysql.connector
 from models.state import State
 
-
 class TestStateMySQLIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -24,12 +23,12 @@ class TestStateMySQLIntegration(unittest.TestCase):
         self.cursor = self.conn.cursor()
 
         # Create tables in the test database
-        self.cursor.execute("""
+        self.cursor.execute(
             CREATE TABLE IF NOT EXISTS states (
                 id VARCHAR(60) PRIMARY KEY,
                 name VARCHAR(128) NOT NULL
             )
-        """)
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
@@ -41,10 +40,10 @@ class TestStateMySQLIntegration(unittest.TestCase):
         # Create a new State object
         state = State(name="California")
 
-        # Save the state to the database
+        # Save the State to the database
         state.save()
 
-        # Retrieve the state object from the database
+        # Retrieve the State object from the database
         self.cursor.execute("SELECT * FROM states WHERE id = %s", (state.id,))
         result = self.cursor.fetchone()
 
@@ -52,7 +51,6 @@ class TestStateMySQLIntegration(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result[0], state.id)
         self.assertEqual(result[1], state.name)
-
 
 if __name__ == "__main__":
     unittest.main()

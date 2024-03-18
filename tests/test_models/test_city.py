@@ -1,7 +1,6 @@
 import unittest
-from models.city import City
-import models
 import mysql.connector
+from models.city import City
 
 class TestCityMySQLIntegration(unittest.TestCase):
     @classmethod
@@ -23,40 +22,37 @@ class TestCityMySQLIntegration(unittest.TestCase):
         """Create a cursor to execute SQL queries"""
         self.cursor = self.conn.cursor()
 
-        # Initialize models.storage
-        models.storage._BaseModel__session = self.conn.cursor()
-
         # Create tables in the test database
-        with open('file.sql', 'r') as file:
-            sql_script = file.read()
-            self.cursor.execute(sql_script)
+        self.cursor.execute(
+            CREATE TABLE IF NOT EXISTS cities (
+                id VARCHAR(60) PRIMARY KEY,
+                state_id VARCHAR(60) NOT NULL,
+                name VARCHAR(128) NOT NULL
+            )
+        )
 
     def tearDown(self):
         """Rollback any changes made during the test and close the cursor"""
         self.conn.rollback()
         self.cursor.close()
 
-    def test_city_attributes(self):
-        """Test attributes of the City model"""
-        # Create a new city object
-        city = City(name="Test City")
+    def test_create_city(self):
+        """Test creating a City object and saving it to the database"""
+        # Create a new City object
+        city = City(state_id="state_id", name="City Name")
 
-        # Test individual attributes
-        self.assertEqual(city.name, "Test City")
-
-    def test_city_behavior(self):
-        """Test behavior of the City model"""
-        # Create a new city object
-        city = City(name="Test City")
-
-        # Save the city to the database
+        # Save the City to the database
         city.save()
 
-        # Retrieve the city object from the database
-        city_from_db = models.storage.get(City, city.id)
+        # Retrieve the City object from the database
+        self.cursor.execute("SELECT * FROM cities WHERE id = %s", (city.id,))
+        result = self.cursor.fetchone()
 
-        # Test behavior (e.g., saving, updating)
-        self.assertEqual(city_from_db.name, "Test City")
+        # Verify that the object was saved to the database
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], city.id)
+        self.assertEqual(result[1], city.state_id)
+        self.assertEqual(result[2], city.name)
 
 if __name__ == "__main__":
     unittest.main()
