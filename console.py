@@ -126,34 +126,37 @@ class HBNBCommand(cmd.Cmd):
                 raise NameError()
 
             # Remove class name from arg_list to get keyword arguments
-            kwargs = {}
+            params = {}
             for arg in arg_list[1:]:
-                arg_splited = arg.split("=")
-                arg_splited[1] = eval(arg_splited[1])
-                if type(arg_splited[1]) is str:
-                    arg_splited[1] = arg_splited[1].replace("_", " ").replace('"', '\\"')
-                kwargs[arg_splited[0]] = arg_splited[1]
+                if '=' not in arg:
+                    continue
+                key, value = arg.split('=', 1)
+                # Handle string values
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1].replace('\\"', '"').replace('_', ' ')
+                # Handle float values
+                elif '.' in value:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        continue  # Skip invalid float values
+                # Handle integer values
+                else:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        continue  # Skip invalid integer values
+                params[key] = value
 
-            # Set default value for created_at if not provided
-            if 'created_at' not in kwargs:
-                kwargs['created_at'] = datetime.utcnow()
+            # Create instance with provided parameters
+            new_instance = HBNBCommand.classes[class_name](**params)
+            new_instance.save()
+            print(new_instance.id)
 
-            # Set default value for updated_at if not provided
-            if 'updated_at' not in kwargs:
-                kwargs['updated_at'] = kwargs.get('created_at', datetime.utcnow())
-
-        except SyntaxError:
-            print("** class name missing **")
-        except NameError:
-            print("** class doesn't exist **")
-        print("Creating instance with kwargs:", kwargs)
-        new_instance = HBNBCommand.classes[class_name](**kwargs)
-        new_instance.save()
-        print(new_instance.id)
-
-
-
-
+        except SyntaxError as e:
+            print(e)
+        except NameError as e:
+            print(e)
 
     def help_create(self):
         """ Help information for the create method """
