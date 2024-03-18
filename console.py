@@ -2,7 +2,6 @@
 """ Console Module """
 import cmd
 import sys
-from datetime import datetime
 from models.base_model import BaseModel
 from models.__init__ import storage
 from models.user import User
@@ -11,6 +10,7 @@ from models.state import State
 from models.city import City
 from models.amenity import Amenity
 from models.review import Review
+from datetime import datetime
 
 
 class HBNBCommand(cmd.Cmd):
@@ -74,7 +74,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] == '{' and pline[-1] =='}'\
+                    if pline[0] is '{' and pline[-1] is'}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -125,38 +125,40 @@ class HBNBCommand(cmd.Cmd):
             if class_name not in HBNBCommand.classes:
                 raise NameError()
 
-            # Remove class name from arg_list to get keyword arguments
-            params = {}
+            kwargs = {}
             for arg in arg_list[1:]:
-                if '=' not in arg:
+                arg_splited = arg.split("=")
+                if len(arg_splited) != 2:
                     continue
-                key, value = arg.split('=', 1)
-                # Handle string values
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1].replace('\\"', '"').replace('_', ' ')
-                # Handle float values
-                elif '.' in value:
-                    try:
-                        value = float(value)
-                    except ValueError:
-                        continue  # Skip invalid float values
-                # Handle integer values
-                else:
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        continue  # Skip invalid integer values
-                params[key] = value
 
-            # Create instance with provided parameters
-            new_instance = HBNBCommand.classes[class_name](**params)
+                key, value = arg_splited
+                try:
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1].replace('\\"', '"').replace('_', ' ')
+                    elif '.' in value:
+                        value = float(value)
+                    else:
+                        value = int(value)
+                except ValueError:
+                    print(f"Skipping invalid value for parameter {key}: {value}")
+                    continue
+                kwargs[key] = value
+
+            if 'created_at' not in kwargs:
+                kwargs['created_at'] = datetime.utcnow()
+
+            # Set default value for updated_at if not provided
+            if 'updated_at' not in kwargs:
+                kwargs['updated_at'] = kwargs.get('created_at', datetime.utcnow())
+            
+            new_instance = HBNBCommand.classes[class_name](**kwargs)
             new_instance.save()
             print(new_instance.id)
-
-        except SyntaxError as e:
-            print(e)
-        except NameError as e:
-            print(e)
+        except SyntaxError:
+            print("** class name missing **")
+        except NameError:
+            print("** class doesn't exist **")
+        
 
     def help_create(self):
         """ Help information for the create method """
@@ -296,7 +298,7 @@ class HBNBCommand(cmd.Cmd):
             return
 
         # first determine if kwargs or args
-        if '{' in args[2] and '}' in args[2] and type(eval(args[2])) == dict:
+        if '{' in args[2] and '}' in args[2] and type(eval(args[2])) is dict:
             kwargs = eval(args[2])
             args = []  # reformat kwargs into list, ex: [<name>, <value>, ...]
             for k, v in kwargs.items():
@@ -304,7 +306,7 @@ class HBNBCommand(cmd.Cmd):
                 args.append(v)
         else:  # isolate args
             args = args[2]
-            if args and args[0] == '\"':  # check for quoted arg
+            if args and args[0] is '\"':  # check for quoted arg
                 second_quote = args.find('\"', 1)
                 att_name = args[1:second_quote]
                 args = args[second_quote + 1:]
@@ -315,7 +317,7 @@ class HBNBCommand(cmd.Cmd):
             if not att_name and args[0] is not ' ':
                 att_name = args[0]
             # check for quoted val arg
-            if args[2] and args[2][0] == '\"':
+            if args[2] and args[2][0] is '\"':
                 att_val = args[2][1:args[2].find('\"', 1)]
 
             # if att_val was not quoted arg
