@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """ State Module for HBNB project """
 from models.base_model import BaseModel, Base
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 from models.city import City
 from os import getenv
@@ -21,11 +21,10 @@ class State(BaseModel, Base):
         @property
         def cities(self):
             """Getter attribute for cities"""
-            from models import storage
             city_l = []
             for city in list(models.storage.all(City).values()):
                 if city.state_id == self.id:
                     city_l.append(city)
             return city_l
 
-    id = Column(String(60), nullable=False, primary_key=True)
+    #id = Column(String(60), nullable=False, primary_key=True)

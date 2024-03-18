@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from os import getenv
 
 
-class Amenity(BaseModel):
+class Amenity(BaseModel, Base):
     """ represent amenity class"""
 
     __tablename__ = "amenities"
