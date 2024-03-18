@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 from sqlalchemy.ext.declarative import declarative_base
 import models
-from models import storage
 from sqlalchemy import Column, String, DateTime
 
 Base = declarative_base()
@@ -37,7 +36,7 @@ class BaseModel:
             self.id = str(uuid.uuid4())
             self.created_at = datetime.utcnow()
             self.updated_at = self.created_at
-            
+
     def __str__(self):
         """Returns a string representation of the instance"""
         cls = (str(type(self)).split('.')[-1]).split('\'')[0]
