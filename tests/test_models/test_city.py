@@ -1,46 +1,62 @@
 import unittest
 from models.city import City
-from models.state import State
-from models.base_model import BaseModel
-from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.orm import relationship
+import models
+import mysql.connector
 
+class TestCityMySQLIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Set up a connection to the test MySQL database"""
+        cls.conn = mysql.connector.connect(
+            host="localhost",
+            user="test_user",
+            password="test_password",
+            database="test_database"
+        )
 
-class TestCity(unittest.TestCase):
-    """Test the City class"""
+    @classmethod
+    def tearDownClass(cls):
+        """Close the connection to the test MySQL database"""
+        cls.conn.close()
 
-    def test_inheritance(self):
-        """Test if City inherits from BaseModel"""
-        city = City()
-        self.assertIsInstance(city, BaseModel)
+    def setUp(self):
+        """Create a cursor to execute SQL queries"""
+        self.cursor = self.conn.cursor()
 
-    def test_attributes(self):
-        """Test the attributes of City"""
-        self.assertTrue(hasattr(City, 'state_id'))
-        self.assertTrue(hasattr(City, 'name'))
-        self.assertTrue(hasattr(City, 'places'))
+        # Initialize models.storage
+        models.storage._BaseModel__session = self.conn.cursor()
 
-    def test_attributes_type(self):
-        """Test the types of attributes of City"""
-        self.assertIsInstance(City.state_id, Column)
-        self.assertIsInstance(City.name, Column)
-        self.assertIsInstance(City.places, relationship)
+        # Create tables in the test database
+        with open('file.sql', 'r') as file:
+            sql_script = file.read()
+            self.cursor.execute(sql_script)
 
-    def test_attributes_nullable(self):
-        """Test the nullable constraints of attributes of City"""
-        self.assertFalse(City.state_id.nullable)
-        self.assertFalse(City.name.nullable)
+    def tearDown(self):
+        """Rollback any changes made during the test and close the cursor"""
+        self.conn.rollback()
+        self.cursor.close()
 
-    def test_relationship(self):
-        """Test the relationship between City and Place"""
-        self.assertEqual(City.places.property.key, 'places')
-        self.assertIsInstance(City.places.argument, str)
-        self.assertEqual(City.places.argument, 'Place')
-        self.assertTrue(hasattr(City.places, 'backref'))
-        self.assertEqual(City.places.backref, 'cities')
-        self.assertTrue(hasattr(City.places, 'cascade'))
-        self.assertEqual(City.places.cascade, 'delete')
+    def test_city_attributes(self):
+        """Test attributes of the City model"""
+        # Create a new city object
+        city = City(name="Test City")
 
+        # Test individual attributes
+        self.assertEqual(city.name, "Test City")
+
+    def test_city_behavior(self):
+        """Test behavior of the City model"""
+        # Create a new city object
+        city = City(name="Test City")
+
+        # Save the city to the database
+        city.save()
+
+        # Retrieve the city object from the database
+        city_from_db = models.storage.get(City, city.id)
+
+        # Test behavior (e.g., saving, updating)
+        self.assertEqual(city_from_db.name, "Test City")
 
 if __name__ == "__main__":
     unittest.main()

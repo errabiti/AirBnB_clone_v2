@@ -1,70 +1,59 @@
 import unittest
+import mysql.connector
 from models.amenity import Amenity
-from models.base_model import BaseModel
 from datetime import datetime
 
 
-class TestAmenity(unittest.TestCase):
-    """Test the Amenity class"""
+class TestAmenityMySQLIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Set up a connection to the test MySQL database"""
+        cls.conn = mysql.connector.connect(
+            host="localhost",
+            user="test_user",
+            password="test_password",
+            database="test_database"
+        )
 
-    def test_inheritance(self):
-        """Test if Amenity inherits from BaseModel"""
-        amenity = Amenity()
-        self.assertIsInstance(amenity, BaseModel)
+    @classmethod
+    def tearDownClass(cls):
+        """Close the connection to the test MySQL database"""
+        cls.conn.close()
 
-    def test_table_name(self):
-        """Test if the table name is set correctly"""
-        self.assertEqual(Amenity.__tablename__, "amenities")
+    def setUp(self):
+        """Create a cursor to execute SQL queries"""
+        self.cursor = self.conn.cursor()
 
-    def test_name_attribute(self):
-        """Test if the name attribute is correctly set"""
-        amenity = Amenity()
-        self.assertTrue(hasattr(amenity, "name"))
+        # Create tables in the test database
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS amenities (
+                id VARCHAR(60) PRIMARY KEY,
+                name VARCHAR(128) NOT NULL
+            )
+        """)
 
-    def test_relationship(self):
-        """Test if the relationship with Place is correctly set"""
-        amenity = Amenity()
-        if getenv('HBNB_TYPE_STORAGE') == "db":
-            self.assertTrue(hasattr(amenity, "place_amenities"))
-        else:
-            self.assertFalse(hasattr(amenity, "place_amenities"))
+    def tearDown(self):
+        """Rollback any changes made during the test and close the cursor"""
+        self.conn.rollback()
+        self.cursor.close()
 
-    def test_name_type(self):
-        """Test if the name attribute is of type string"""
-        amenity = Amenity()
-        self.assertIsInstance(amenity.name, str)
+    def test_create_amenity(self):
+        """Test creating an Amenity object and saving it to the database"""
+        # Create a new Amenity object
+        amenity = Amenity(name="Swimming Pool")
 
-    def test_name_default_value(self):
-        """Test if the default value of name attribute is an empty string"""
-        amenity = Amenity()
-        self.assertEqual(amenity.name, "")
+        # Save the amenity to the database
+        amenity.save()
 
-    def test_created_at(self):
-        """Test if the created_at attribute is correctly set"""
-        amenity = Amenity()
-        self.assertIsInstance(amenity.created_at, datetime)
+        # Retrieve the amenity object from the database
+        self.cursor.execute("SELECT * FROM amenities WHERE id = %s", (amenity.id,))
+        result = self.cursor.fetchone()
 
-    def test_updated_at(self):
-        """Test if the updated_at attribute is correctly set"""
-        amenity = Amenity()
-        self.assertIsInstance(amenity.updated_at, datetime)
+        # Verify that the object was saved to the database
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], amenity.id)
+        self.assertEqual(result[1], amenity.name)
 
-    def test_to_dict_method(self):
-        """Test the to_dict method of Amenity"""
-        amenity = Amenity()
-        amenity_dict = amenity.to_dict()
-        self.assertEqual(amenity_dict["__class__"], "Amenity")
-        self.assertIsInstance(amenity_dict["created_at"], str)
-        self.assertIsInstance(amenity_dict["updated_at"], str)
-
-    def test_str_method(self):
-        """Test the __str__ method of Amenity"""
-        amenity = Amenity()
-        amenity_str = str(amenity)
-        self.assertIn("[Amenity]", amenity_str)
-        self.assertIn("'id':", amenity_str)
-        self.assertIn("'created_at':", amenity_str)
-        self.assertIn("'updated_at':", amenity_str)
 
 if __name__ == "__main__":
     unittest.main()

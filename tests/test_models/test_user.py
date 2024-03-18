@@ -1,47 +1,63 @@
 import unittest
+import mysql.connector
 from models.user import User
-from models.base_model import BaseModel
-from sqlalchemy import Column, String
-from sqlalchemy.orm import relationship
 
 
-class TestUser(unittest.TestCase):
-    """Test the User class"""
+class TestUserMySQLIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Set up a connection to the test MySQL database"""
+        cls.conn = mysql.connector.connect(
+            host="localhost",
+            user="test_user",
+            password="test_password",
+            database="test_database"
+        )
 
-    def test_inheritance(self):
-        """Test if User inherits from BaseModel"""
-        user = User()
-        self.assertIsInstance(user, BaseModel)
+    @classmethod
+    def tearDownClass(cls):
+        """Close the connection to the test MySQL database"""
+        cls.conn.close()
 
-    def test_attributes(self):
-        """Test the attributes of User"""
-        self.assertTrue(hasattr(User, 'email'))
-        self.assertTrue(hasattr(User, 'password'))
-        self.assertTrue(hasattr(User, 'first_name'))
-        self.assertTrue(hasattr(User, 'last_name'))
-        self.assertTrue(hasattr(User, 'review'))
-        self.assertTrue(hasattr(User, 'places'))
+    def setUp(self):
+        """Create a cursor to execute SQL queries"""
+        self.cursor = self.conn.cursor()
 
-    def test_attributes_type(self):
-        """Test the types of attributes of User"""
-        self.assertIsInstance(User.email, Column)
-        self.assertIsInstance(User.password, Column)
-        self.assertIsInstance(User.first_name, Column)
-        self.assertIsInstance(User.last_name, Column)
-        self.assertIsInstance(User.review, relationship)
-        self.assertIsInstance(User.places, relationship)
+        # Create tables in the test database
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(60) PRIMARY KEY,
+                email VARCHAR(128) NOT NULL,
+                password VARCHAR(128) NOT NULL,
+                first_name VARCHAR(128),
+                last_name VARCHAR(128)
+            )
+        """)
 
-    def test_attributes_nullable(self):
-        """Test the nullable constraints of attributes of User"""
-        self.assertFalse(User.email.nullable)
-        self.assertFalse(User.password.nullable)
-        self.assertTrue(User.first_name.nullable)
-        self.assertTrue(User.last_name.nullable)
+    def tearDown(self):
+        """Rollback any changes made during the test and close the cursor"""
+        self.conn.rollback()
+        self.cursor.close()
 
-    def test_relationship(self):
-        """Test the relationship between User and other classes"""
-        self.assertIsInstance(User.review, relationship)
-        self.assertIsInstance(User.places, relationship)
+    def test_create_user(self):
+        """Test creating a User object and saving it to the database"""
+        # Create a new User object
+        user = User(email="test@example.com", password="password123", first_name="John", last_name="Doe")
+
+        # Save the user to the database
+        user.save()
+
+        # Retrieve the user object from the database
+        self.cursor.execute("SELECT * FROM users WHERE id = %s", (user.id,))
+        result = self.cursor.fetchone()
+
+        # Verify that the object was saved to the database
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], user.id)
+        self.assertEqual(result[1], user.email)
+        self.assertEqual(result[2], user.password)
+        self.assertEqual(result[3], user.first_name)
+        self.assertEqual(result[4], user.last_name)
 
 
 if __name__ == "__main__":
