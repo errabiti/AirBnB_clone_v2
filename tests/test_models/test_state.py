@@ -1,19 +1,39 @@
-#!/usr/bin/python3
-""" """
-from tests.test_models.test_base_model import test_basemodel
+import unittest
 from models.state import State
+from models.base_model import BaseModel
+from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
+from os import getenv
 
 
-class test_state(test_basemodel):
-    """ """
+class TestState(unittest.TestCase):
+    """Test the State class"""
 
-    def __init__(self, *args, **kwargs):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.name = "State"
-        self.value = State
+    def test_inheritance(self):
+        """Test if State inherits from BaseModel"""
+        state = State()
+        self.assertIsInstance(state, BaseModel)
 
-    def test_name3(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.name), str)
+    def test_attributes(self):
+        """Test the attributes of State"""
+        self.assertTrue(hasattr(State, 'name'))
+        self.assertTrue(hasattr(State, 'cities'))
+
+    def test_attributes_type(self):
+        """Test the types of attributes of State"""
+        self.assertIsInstance(State.name, Column)
+        self.assertIsInstance(State.cities, relationship)
+
+    def test_attributes_nullable(self):
+        """Test the nullable constraints of attributes of State"""
+        self.assertFalse(State.name.nullable)
+
+    def test_relationship(self):
+        """Test the relationship between State and other classes"""
+        self.assertEqual(State.name.type.python_type, str)
+        self.assertIsInstance(State.cities, relationship)
+        self.assertTrue(hasattr(State, 'cities'))
+
+
+if __name__ == "__main__":
+    unittest.main()
