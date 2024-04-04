@@ -14,5 +14,5 @@ def do_pack():
         archive_p = 'versions/web_static_{}.tgz'.format(time)
         local("tar -czvf {} web_static".format(archive_p))
         return archive_p
-    except:
+    except FileNotFoundError:
         return None
