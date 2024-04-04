@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 """Distributes an archive to your web servers"""
-from fabric.api import run, put, env
+from fabric.api import put, run, env
 from datetime import datetime
 import os
+
+env.hosts = ['18.206.208.113', '18.206.232.93']
+env.user = "ubuntu"
 
 
 def do_deploy(archive_path):
@@ -18,6 +21,9 @@ def do_deploy(archive_path):
         run('mkdir -p {}{}/'.format(path, archive_base))
         run('tar -xzf /tmp/{} -C {}{}/'
             .format(archive_name, path, archive_base))
+        run('mv {0}{1}/web_static/* {0}{1}/'
+            .format(path, archive_base))
+        run('rm -rf {}{}/web_static'.format(path, archive_base))
         run('rm /tmp/{}'.format(archive_name))
         run('rm -rf /data/web_static/current')
         run('ln -s {}{}/ /data/web_static/current'.format(path, archive_base))
