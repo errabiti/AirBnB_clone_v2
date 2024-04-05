@@ -1,34 +1,40 @@
 #!/usr/bin/python3
-"""Distributes an archive to your web servers"""
-from fabric.api import put, run, env
+""" Function that compress a folder """
 from datetime import datetime
+from fabric.api import *
+import shlex
 import os
+
 
 env.hosts = ['18.206.208.113', '18.206.232.93']
 env.user = "ubuntu"
 
 
 def do_deploy(archive_path):
-    """Distributes an archive to your web servers"""
+    """ Deploys """
     if not os.path.exists(archive_path):
         return False
     try:
-        put(archive_path, '/tmp/')
-        archive_name = os.path.basename(archive_path)
-        archive_base = os.path.splitext(archive_name)[0]
-        path = "/data/web_static/releases/"
+        name = archive_path.replace('/', ' ')
+        name = shlex.split(name)
+        name = name[-1]
 
-        run('mkdir -p {}{}/'.format(path, archive_base))
-        run('tar -xzf /tmp/{} -C {}{}/'
-            .format(archive_name, path, archive_base))
-        run('rm /tmp/{}'.format(archive_name))
-        run('mv {0}{1}/web_static/* {0}{1}/'
-            .format(path, archive_base))
-        run('rm -rf {}{}/web_static'.format(path, archive_base))
-        run('rm -rf /data/web_static/current')
-        run('ln -s {}{}/ /data/web_static/current'.format(path, archive_base))
-        run('chmod -R 755 /data/')
+        wname = name.replace('.', ' ')
+        wname = shlex.split(wname)
+        wname = wname[0]
+
+        releases_path = "/data/web_static/releases/{}/".format(wname)
+        tmp_path = "/tmp/{}".format(name)
+
+        put(archive_path, "/tmp/")
+        run("mkdir -p {}".format(releases_path))
+        run("tar -xzf {} -C {}".format(tmp_path, releases_path))
+        run("rm {}".format(tmp_path))
+        run("mv {}web_static/* {}".format(releases_path, releases_path))
+        run("rm -rf {}web_static".format(releases_path))
+        run("rm -rf /data/web_static/current")
+        run("ln -s {} /data/web_static/current".format(releases_path))
         print("New version deployed!")
         return True
-    except FileNotFoundError:
+    except:
         return False
